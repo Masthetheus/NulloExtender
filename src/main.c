@@ -189,7 +189,6 @@ int main(int argc, char *argv[]){
         for (int i = 0; i < n; i++){
                 uint64_t curr_idx = seeds[i].idx;
 		int max_gc_count = (gc_max/100)*k;
-
                 for(int j = 0; j < ext_k - k; j++){
                         uint64_t base = rand() % ALPHABET_SIZE;
 			if (base == 1 || base == 3){
@@ -214,10 +213,11 @@ int main(int argc, char *argv[]){
 				}
 			}
 			seeds[i].last_base = base;
-
+			
+			int current_k = k + j + 1;
+			int max_gc_count = (int)((gc_max/100))*current_k;
                         curr_idx = (curr_idx << 2) | base;
                 }
-                
                 char *seq = malloc((ext_k+1) * sizeof(char));
                 decode_kmer(curr_idx, ext_k, seq);
                 printf("%s\n", seq);
