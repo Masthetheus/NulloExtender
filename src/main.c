@@ -38,8 +38,8 @@ void select_new_seed(seed *seeds, uint64_t *nullomers, int n, int count, int ext
 
 int main(int argc, char *argv[]){
         srand(time(NULL));
-        if (argc != 5){
-                fprintf(stderr, "Usage: %s <nullomer_file> <gc_max> <homopolymer_max> <number_of_seeds>\n", argv[0]);
+        if (argc != 6){
+                fprintf(stderr, "Usage: %s <nullomer_file> <gc_max> <homopolymer_max> <number_of_seeds> <target_length>\n", argv[0]);
                 return 1;
         }
 
@@ -55,8 +55,9 @@ int main(int argc, char *argv[]){
 		printf("Error: No valid numeric digits found.\n");
 		return 1;
 	}
-	int homopolymer_max = atoi(argv[3]);
+	int hp_max = atoi(argv[3]);
 	int n = atoi(argv[4]);
+        int ext_k = atoi(argv[5]);
 
         uint64_t *nullomers = NULL;
         size_t count = 0;
@@ -119,7 +120,6 @@ int main(int argc, char *argv[]){
 
         seed seeds[n];
 
-        int ext_k = k + 5;
 	int livecount = count;
 
         for (int i = 0; i < n; i++){
@@ -141,8 +141,6 @@ int main(int argc, char *argv[]){
 
         
 	//select_new_seed(seeds, nullomers, 1, count, ext_k);
-
-	uint64_t hp_max = 3;
 
 	for (int i = 0; i < n; i++){
 		bool passed = true;
