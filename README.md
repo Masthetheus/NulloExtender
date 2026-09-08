@@ -113,39 +113,25 @@ Some DEBUG prints are currently available and shall be patched soon.
 
 If you use this software in a publication, please cite it as:
 
-[Your Last Name], [First Name], et al. "MAW-Extension: Selecting and Extending Nullomers with Biochemical Constraints." GitHub repository, https://github.com/[USERNAME]/maw-extension, 2026.
+Cassol, Matheus Pedron Cassol, "NulloExtender" GitHub repository, https://github.com/Masthetheus/NulloExtender.git, 2026.
 
-BibTeX entry:
+## 9. License
 
-@misc{mawextension2026,
-  author = {[Your Last Name], [First Name] and [Co-author, if any]},
-  title = {{MAW-Extension}: Constrained Seed Extension from Minimal Absent Words},
-  year = {2026},
-  publisher = {GitHub},
-  howpublished = {\url{https://github.com/[USERNAME]/maw-extension}}
-}
+This project is distributed under the GPL-3.0 License. See the LICENSE file in the repository root for full terms.
 
 
-9. License
-
-This project is distributed under the MIT License. See the LICENSE file in the repository root for full terms.
-
-
-10. Contact
+## 10. Contact
 
 Correspondence and bug reports should be directed to:
 
-[Your Full Name]
-[Your Institutional Email]
-[Laboratory/Department]
-[Institution Name]
-[Institution Address]
+Matheus Pedron Cassol
+matheuspedroncassol@gmail.com
+LBCM
+Universidade Federal do Rio Grande do Sul
 
-Project repository: https://github.com/[USERNAME]/maw-extension
+Project repository: https://github.com/Masthetheus/NulloExtender.git.
 
 
-11. Acknowledgements
+## 11. Acknowledgements
 
-This software was developed at [Lab/Institute Name] and supported by [Funding Agency, Grant Number, if applicable]. The nullomer indexing format was originally designed by [Original Author/Lab] and adapted with permission.
-
-=== END ===
+This software was developed at LBCM-UFRGS and supported in spirit and mind by my colleagues.
