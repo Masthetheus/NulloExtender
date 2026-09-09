@@ -77,8 +77,12 @@ void decode_kmer(uint64_t idx, int k, char *seq) {
 
 void select_seed(seed *seeds, uint64_t *nullomers, int i, int *count, int ext_k){
 	uint64_t random = rand() % *count;
-	seeds[i].idx = nullomers[random];
-
+	if (nullomers[random]){
+		seeds[i].idx = nullomers[random];
+	} else {
+		printf("No more suitable seeds are available, try lowering seed number.");
+		exit(EXIT_FAILURE);	
+	}
 	uint64_t holder = nullomers[random];
 	nullomers[random] = nullomers[*count - 1];
 	nullomers[*count - 1] = holder;
@@ -283,12 +287,12 @@ int main(int argc, char *argv[]){
                 uint64_t curr_idx = seeds[i].idx;
 		int max_gc_count = (gc_max/100)*k;
 		int min_gc_count = (gc_min/100)*k;
+
                 for(int j = 0; j < ext_k - k; j++){
                         uint64_t base = rand() % ALPHABET_SIZE;
 			bool quality_checker = false;
 	
 			while (quality_checker == false){
-
 				bool hp_checker = hp_check(&seeds[i], base, hp_max);
 				bool gc_checker = gc_check(&seeds[i], base, max_gc_count, min_gc_count);
 
