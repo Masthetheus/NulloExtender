@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <math.h>
 #include <time.h>
 
 #define ALPHABET_SIZE 4 // A, C, T AND G
@@ -10,11 +11,60 @@
 
 static const char BITS_TO_BASE[4] = {'A', 'C', 'T', 'G'};
 
+typedef struct {
+	double delta_h;
+	double delta_s;
+} NNParams;
+
+static const NNParams nn_table[4][4] = {
+    /*            A              C            T             G        */
+    /* A */ {{-7.9,-22.2}, {-8.4,-22.4}, {-7.2,-20.4}, {-8.2,-22.2}},
+    /* C */ {{-8.5,-22.7}, {-8.0,-19.9}, {-7.8,-21.0}, {-9.8,-24.4}},
+    /* T */ {{-7.2,-21.3}, {-8.2,-22.2}, {-7.9,-22.2}, {-8.4,-22.4}},
+    /* G */ {{-8.2,-22.2}, {-9.8,-24.4}, {-8.5,-22.7}, {-8.0,-19.9}}
+};
+
+typedef struct {
+	double gc_init_h, gc_init_s;
+	double at_init_h, at_init_s;
+} InitParams;
+
+static const InitParams init_params = {
+    .gc_init_h = 0.1,  .gc_init_s = -2.8,
+    .at_init_h = 2.3,  .at_init_s = 4.1
+};
+
+typedef struct {
+    double delta_h_acc;
+    double delta_s_acc;
+    int initialized;
+} TmAccumulator;
+
+void tm_add_base(TmAccumulator *acc, uint8_t prev_base, uint8_t curr_base) {
+    acc->delta_h_acc += nn_table[prev_base][curr_base].delta_h;
+    acc->delta_s_acc += nn_table[prev_base][curr_base].delta_s;
+}
+
+double tm_finalize(TmAccumulator *acc, uint8_t first_base, uint8_t last_base,
+                    double na_conc, int seq_len) {
+    double h = acc->delta_h_acc;
+    double s = acc->delta_s_acc;
+
+    // salt correction
+    s += 0.368 * (seq_len - 1) * log(na_conc);
+
+    const double R = 1.987; // cal/(mol*K)
+    double Ct = 250e-9;     // 250nM, default
+    double tm_kelvin = (h * 1000.0) / (s + R * log(Ct / 4.0));
+    return tm_kelvin - 273.15;
+}
+
 typedef struct seed{
 	uint64_t idx;
 	int gc;
 	int hp_count;
 	uint64_t last_base;
+	TmAccumulator *acc;
 } seed;
 
 void decode_kmer(uint64_t idx, int k, char *seq) {
@@ -34,6 +84,32 @@ void select_new_seed(seed *seeds, uint64_t *nullomers, int n, int count, int ext
 	printf("New seed:\n%s\n", seq);
 	
 	free(seq);
+}
+
+bool gc_check(seed *s, uint64_t base, int max_gc_count){
+	if (base == 1 || base == 3){
+		s->gc++;
+		if (s->gc >= max_gc_count){
+			s->gc--;
+			return false;
+		} else {
+			return true;
+		}
+	}
+	return true;
+}
+
+bool hp_check(seed *s, uint64_t base, int hp_max){
+	if (s->last_base == base){
+		s->hp_count++;
+		if (s->hp_count >= hp_max){
+			s->hp_count--;
+			return false;
+		}
+	} else {
+		s->hp_count = 1;
+	}
+	return true;
 }
 
 int main(int argc, char *argv[]){
@@ -155,12 +231,16 @@ int main(int argc, char *argv[]){
 		}
 		for (int j = 1; j < k; j++){
 			uint64_t base = (idx >> ((k-j-1)*2)) & 3;
+			if (j == 1){
+				seeds[i].last_base = base;
+			}
 			if (base == 1 || base == 3){
 				gc++;
 				if (gc > max_gc_count){
 					passed = false;
 				}
 			}
+
 			if (first_base == base){
 				hp_count++;
 				if (hp_count > hp_max){
@@ -170,11 +250,20 @@ int main(int argc, char *argv[]){
 				hp_count = 1;
 				first_base = base;
 			}
+
 			if (passed == false){
 				select_new_seed(seeds, nullomers, i, livecount, k);
 				i--;	
 				break;
 			}
+			
+			//if (j > 1){
+			//	uint64_t previous = seeds[i].last_base;
+			//	seeds[i].acc->delta_h_acc += nn_table[previous][base].delta_h;	
+			//	seeds[i].acc->delta_s_acc += nn_table[previous][base].delta_s;	
+			//}
+			
+			seeds[i].last_base = base;
 		}
 		if (passed == true){
 			uint64_t idx_holder = seeds[i].idx;
@@ -191,31 +280,24 @@ int main(int argc, char *argv[]){
 		int max_gc_count = (gc_max/100)*k;
                 for(int j = 0; j < ext_k - k; j++){
                         uint64_t base = rand() % ALPHABET_SIZE;
-			if (base == 1 || base == 3){
-				seeds[i].gc++;
-				if (seeds[i].gc >= max_gc_count){
-					seeds[i].gc--;
-					base--;
+			bool quality_checker = false;
+	
+			while (quality_checker == false){
+
+				bool hp_checker = hp_check(&seeds[i], base, hp_max);
+				bool gc_checker = gc_check(&seeds[i], base, max_gc_count);
+
+				if(gc_checker == false || hp_checker == false){
+					base = (base + 1 + (rand() % (ALPHABET_SIZE - 1))) % ALPHABET_SIZE;
+				} else {
+					quality_checker = true;
 				}
 			}
-			if (seeds[i].last_base == base){
-				seeds[i].hp_count++;
-				if (seeds[i].hp_count >= hp_max){
-					seeds[i].hp_count--;
-					bool flag = true;
-					while (flag){
-						uint64_t new_base = rand() % ALPHABET_SIZE;
-						if (new_base != base){
-							base = new_base;
-							flag = false;
-						}
-					}
-				}
-			}
+			//tm_add_base(seeds[i]->acc, seeds[i].last_base, base);
 			seeds[i].last_base = base;
 			
 			int current_k = k + j + 1;
-			int max_gc_count = (int)((gc_max/100))*current_k;
+			max_gc_count = (int)((gc_max/100))*current_k;
                         curr_idx = (curr_idx << 2) | base;
                 }
                 char *seq = malloc((ext_k+1) * sizeof(char));

@@ -4,6 +4,7 @@ NulloExtender: Constrained Seed Extension from Nullomers and Minimal Absent Word
 
 **Version 1.0.0**  | **Experimental Release**
 
+** The current version is extremely experimental, and its results  shouldn't be taken as face value for final usage. **
 
 ## 1. Description
 
