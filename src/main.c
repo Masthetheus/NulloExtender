@@ -75,9 +75,14 @@ void decode_kmer(uint64_t idx, int k, char *seq) {
     seq[k] = '\0';
 }
 
-void select_new_seed(seed *seeds, uint64_t *nullomers, int n, int count, int ext_k){
-	uint64_t random = rand() % count;
-	seeds[n].idx = nullomers[random];
+void select_seed(seed *seeds, uint64_t *nullomers, int i, int *count, int ext_k){
+	uint64_t random = rand() % *count;
+	seeds[i].idx = nullomers[random];
+
+	uint64_t holder = nullomers[random];
+	nullomers[random] = nullomers[*count - 1];
+	nullomers[*count - 1] = holder;
+	*count--;
 
         char *seq = malloc((ext_k+1) * sizeof(char));
 	decode_kmer(nullomers[random], ext_k, seq);
@@ -86,7 +91,7 @@ void select_new_seed(seed *seeds, uint64_t *nullomers, int n, int count, int ext
 	free(seq);
 }
 
-bool gc_check(seed *s, uint64_t base, int max_gc_count){
+bool gc_check(seed *s, uint64_t base, int max_gc_count, int min_gc_count){
 	if (base == 1 || base == 3){
 		s->gc++;
 		if (s->gc >= max_gc_count){
@@ -95,6 +100,10 @@ bool gc_check(seed *s, uint64_t base, int max_gc_count){
 		} else {
 			return true;
 		}
+	}
+
+	if (s->gc < min_gc_count){
+		return false;
 	}
 	return true;
 }
@@ -109,6 +118,54 @@ bool hp_check(seed *s, uint64_t base, int hp_max){
 	} else {
 		s->hp_count = 1;
 	}
+	return true;
+}
+
+bool seed_check(seed *s, int k, int gc_max_count, int gc_min_count, int hp_max){
+	int gc = 0;
+	int hp_count = 1;
+	uint64_t idx = s->idx;
+	
+	uint64_t first_base = (idx >> ((k-1)*2)) & 3;
+	
+	if (first_base == 1 || first_base == 3){
+		gc++;
+	}
+
+	for (int j = 1; j < k; j++){
+		uint64_t base = (idx >> ((k-j-1)*2)) & 3;
+		
+		if (j == 1){
+			s->last_base = base;
+		}
+
+		if (base == 1 || base == 3){
+			gc++;
+			if (gc > gc_max_count){
+				return false;
+			}
+		}
+
+		if (first_base == base){
+			hp_count++;
+			if (hp_count > hp_max){
+				return false;
+			}
+		} else {
+			hp_count = 1;
+			first_base = base;
+		}
+		s->last_base = base;
+	}
+	
+	if (gc < gc_min_count){
+		return false;
+	}
+	
+	uint64_t idx_holder = s->idx;
+	s->gc = gc;
+	s->hp_count = hp_count;
+	s->last_base = idx_holder & 3;	
 	return true;
 }
 
@@ -204,84 +261,19 @@ int main(int argc, char *argv[]){
 	int livecount = count;
 
         for (int i = 0; i < n; i++){
-                uint64_t random = rand() % count;
-                seeds[i].idx = nullomers[random];
-
-		uint64_t holder = nullomers[random];
-		nullomers[random] = nullomers[livecount - 1];
-		nullomers[livecount - 1] = holder;
-		livecount--;
-
-                char *seq = malloc((k+1) * sizeof(char));
-
-                decode_kmer(seeds[i].idx, k, seq);
-                printf("%s\n", seq);
-
-                free(seq);
+		select_seed(seeds, nullomers, i, &livecount, k);
         }
-
-        
-	//select_new_seed(seeds, nullomers, 1, count, ext_k);
 
 	for (int i = 0; i < n; i++){
 		bool passed = true;
 		int max_gc_count = (gc_max/100)*k;
 		int min_gc_count = (gc_min/100)*k;
-		uint64_t idx = seeds[i].idx;
-		uint64_t first_base = (idx >> ((k-1)*2)) & 3;
-		int hp_count = 1;
-		int gc = 0;
 
-		if (first_base == 1 || first_base == 3){
-			 gc++;
-		}
-		for (int j = 1; j < k; j++){
-			uint64_t base = (idx >> ((k-j-1)*2)) & 3;
-			if (j == 1){
-				seeds[i].last_base = base;
-			}
-			if (base == 1 || base == 3){
-				gc++;
-				if (gc > max_gc_count){
-					passed = false;
-				}
-			}
+		bool seed_checker = seed_check(&seeds[i], k, max_gc_count, min_gc_count, hp_max);
 
-			if (first_base == base){
-				hp_count++;
-				if (hp_count > hp_max){
-					passed = false;
-				}
-			} else{
-				hp_count = 1;
-				first_base = base;
-			}
-
-			if (passed == false){
-				select_new_seed(seeds, nullomers, i, livecount, k);
-				i--;	
-				break;
-			}
-			
-			//if (j > 1){
-			//	uint64_t previous = seeds[i].last_base;
-			//	seeds[i].acc->delta_h_acc += nn_table[previous][base].delta_h;	
-			//	seeds[i].acc->delta_s_acc += nn_table[previous][base].delta_s;	
-			//}
-			
-			seeds[i].last_base = base;
-		}
-
-		//if (gc < min_gc_count){
-		//	select_new_seed(seeds, nullomers, i, livecount, k);
-		//	i--;
-		//	break;
-		//}
-		if (passed == true){
-			uint64_t idx_holder = seeds[i].idx;
-			seeds[i].gc = gc;
-			seeds[i].hp_count = hp_count;
-			seeds[i].last_base = idx_holder & 3;
+		if (seed_checker == false){
+			select_seed(seeds, nullomers, i, &livecount, k);
+			i--;	
 		}
 	}
 
@@ -290,6 +282,7 @@ int main(int argc, char *argv[]){
         for (int i = 0; i < n; i++){
                 uint64_t curr_idx = seeds[i].idx;
 		int max_gc_count = (gc_max/100)*k;
+		int min_gc_count = (gc_min/100)*k;
                 for(int j = 0; j < ext_k - k; j++){
                         uint64_t base = rand() % ALPHABET_SIZE;
 			bool quality_checker = false;
@@ -297,7 +290,7 @@ int main(int argc, char *argv[]){
 			while (quality_checker == false){
 
 				bool hp_checker = hp_check(&seeds[i], base, hp_max);
-				bool gc_checker = gc_check(&seeds[i], base, max_gc_count);
+				bool gc_checker = gc_check(&seeds[i], base, max_gc_count, min_gc_count);
 
 				if(gc_checker == false || hp_checker == false){
 					base = (base + 1 + (rand() % (ALPHABET_SIZE - 1))) % ALPHABET_SIZE;
