@@ -114,8 +114,8 @@ bool hp_check(seed *s, uint64_t base, int hp_max){
 
 int main(int argc, char *argv[]){
         srand(time(NULL));
-        if (argc != 6){
-                fprintf(stderr, "Usage: %s <nullomer_file> <gc_max> <homopolymer_max> <number_of_seeds> <target_length>\n", argv[0]);
+        if (argc != 7){
+                fprintf(stderr, "Usage: %s <nullomer_file> <gc_max> <gc_min> <homopolymer_max> <number_of_seeds> <target_length>\n", argv[0]);
                 return 1;
         }
 
@@ -131,9 +131,14 @@ int main(int argc, char *argv[]){
 		printf("Error: No valid numeric digits found.\n");
 		return 1;
 	}
-	int hp_max = atoi(argv[3]);
-	int n = atoi(argv[4]);
-        int ext_k = atoi(argv[5]);
+	float gc_min = strtof(argv[3], &endptr);
+	if (endptr == argv[3]) {
+		printf("Error: No valid numeric digits found.\n");
+		return 1;
+	}
+	int hp_max = atoi(argv[4]);
+	int n = atoi(argv[5]);
+        int ext_k = atoi(argv[6]);
 
         uint64_t *nullomers = NULL;
         size_t count = 0;
@@ -221,6 +226,7 @@ int main(int argc, char *argv[]){
 	for (int i = 0; i < n; i++){
 		bool passed = true;
 		int max_gc_count = (gc_max/100)*k;
+		int min_gc_count = (gc_min/100)*k;
 		uint64_t idx = seeds[i].idx;
 		uint64_t first_base = (idx >> ((k-1)*2)) & 3;
 		int hp_count = 1;
@@ -265,6 +271,12 @@ int main(int argc, char *argv[]){
 			
 			seeds[i].last_base = base;
 		}
+
+		//if (gc < min_gc_count){
+		//	select_new_seed(seeds, nullomers, i, livecount, k);
+		//	i--;
+		//	break;
+		//}
 		if (passed == true){
 			uint64_t idx_holder = seeds[i].idx;
 			seeds[i].gc = gc;
@@ -297,7 +309,7 @@ int main(int argc, char *argv[]){
 			seeds[i].last_base = base;
 			
 			int current_k = k + j + 1;
-			max_gc_count = (int)((gc_max/100))*current_k;
+			max_gc_count = (int)((gc_max/100)*current_k);
                         curr_idx = (curr_idx << 2) | base;
                 }
                 char *seq = malloc((ext_k+1) * sizeof(char));
