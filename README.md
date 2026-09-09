@@ -21,19 +21,19 @@ This implementation prioritises simplicity and correct adjustment to the filters
 ### 2.2 Build Instructions
 
 Currently, given the whole code being present on a single file, clone the repository and compile the source file directly:
-
+```
 git clone https://github.com/Masthetheus/NulloExtender.git
 cd NulloExtender
 gcc -O3 -std=c99 -o nullo_extender src/main.c -lm
-
+```
 An optional Makefile is currently being worked on, given the future objective of organizing the scrip in proper files.
 
 ## 3. Usage
 
 ### 3.1 Command-line syntax
-
+```
 ./nullo_extender <nullomer_file> <gc_max> <homopolymer_max> <number_of_seeds> <target_length>
-
+```
 ### 3.2 Arguments
 
 Argument: nullomer_file
@@ -58,9 +58,9 @@ Type: int
 Description: Size of the final extended sequence.
 
 ## 3.3 Example
-
+```
 ./nullo_extender data/subtilis_result 55 3 100 20
-
+```
 This invocation reads the subtilis_result index, selects 100 seeds with a GC content not exceeding 55 percent, and rejects any seed containing homopolymers longer than three bases. The extended sequences, independent of the original k value, will have length equal to k = 20 and are written to standard output. Writing to output file is currently at work.
 
 
@@ -97,9 +97,9 @@ RAM usage will directly relate to the nullomeric set size, complexity and seeds 
 ## 6. Output
 
 The program writes extended sequences to standard output in plain text format, one sequence per line. No FASTA headers are added by default; however, redirection may be used to capture the output:
-
+```
 ./maw_extension data/hg38.nullomer 55 3 100 20 > selected_sequences.txt
-
+```
 Diagnostic messages, including the selection of replacement seeds, are printed to stderr to avoid interfering with the primary output stream.
 Some DEBUG prints are currently available and shall be patched soon.
 
