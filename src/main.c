@@ -189,18 +189,24 @@ int main(int argc, char *argv[]){
 	char *endptr;
 	float gc_max = strtof(argv[2], &endptr);
 	if (endptr == argv[2]) {
-		printf("Error: No valid numeric digits found.\n");
+		fprintf(stderr, "Error: No valid numeric digits found.\n");
 		return 1;
 	}
 	float gc_min = strtof(argv[3], &endptr);
 	if (endptr == argv[3]) {
-		printf("Error: No valid numeric digits found.\n");
+		fprintf(stderr, "Error: No valid numeric digits found.\n");
 		return 1;
 	}
+
+	if (gc_min >= gc_max){
+		fprintf(stderr, "Error: Min GC must be smaller than Max GC!");
+		return 1;
+	}	
+
 	int hp_max = atoi(argv[4]);
 	int n = atoi(argv[5]);
         int ext_k = atoi(argv[6]);
-
+		
         uint64_t *nullomers = NULL;
         size_t count = 0;
         size_t capacity = 0;
@@ -213,6 +219,11 @@ int main(int argc, char *argv[]){
 
         int k = parameters[0];
         int half_k = parameters[1];
+
+	if (ext_k <= k){
+		fprintf(stderr,"Error: The target length must be bigger than the inicial k value!");
+		return 1;
+	}
 
         uint8_t codes[2];
 
