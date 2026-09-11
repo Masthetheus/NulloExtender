@@ -302,11 +302,13 @@ int main(int argc, char *argv[]){
 					quality_checker = true;
 				}
 			}
+
 			//tm_add_base(seeds[i]->acc, seeds[i].last_base, base);
 			seeds[i].last_base = base;
 			
 			int current_k = k + j + 1;
 			max_gc_count = (int)((gc_max/100)*current_k);
+			min_gc_count = (int)((gc_min/100)*current_k);
                         curr_idx = (curr_idx << 2) | base;
                 }
                 char *seq = malloc((ext_k+1) * sizeof(char));

@@ -33,7 +33,7 @@ An optional Makefile is currently being worked on, given the future objective of
 
 ### 3.1 Command-line syntax
 ```
-./nullo_extender <nullomer_file> <gc_max> <homopolymer_max> <number_of_seeds> <target_length>
+./nullo_extender <nullomer_file> <max_gc> <min_gc>> <homopolymer_max> <number_of_seeds> <target_length>
 ```
 ### 3.2 Arguments
 
@@ -42,9 +42,13 @@ Type: string
 Description: Path to the binary nullomer index produced by the NulloRetriever pipeline.
 Obs: NulloRetrieve has a tool for translating nullomers into the correct format. In the future accepting oher type of nullomeric files may be added.
 
-Argument: gc_max
+Argument: max_gc
 Type: float
 Description: Maximum allowed GC percentage, expressed as a value between 0 and 100 (e.g., 60 denotes 60 percent).
+
+Argument: min_gc
+Type: float
+Description: Minimum allowed GC percentage, expressed as a value between 0 and 100 (e.g., 60 denotes 60 percent). Must be logically lower than max_gc.
 
 Argument: homopolymer_max
 Type: int
