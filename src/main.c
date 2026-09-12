@@ -8,6 +8,7 @@
 
 #include "file_parser.h"
 #include "seed.h"
+#include "seed_operations.h"
 
 #define ALPHABET_SIZE 4 // A, C, T AND G
 #define INITIAL_CAPACITY 100000
@@ -68,26 +69,6 @@ void decode_kmer(uint64_t idx, int k, char *seq) {
         seq[i] = BITS_TO_BASE[base];
     }
     seq[k] = '\0';
-}
-
-void select_seed(seed *seeds, uint64_t *nullomers, int i, int *count, int ext_k){
-	uint64_t random = rand() % *count;
-	if (nullomers[random]){
-		seeds[i].idx = nullomers[random];
-	} else {
-		printf("No more suitable seeds are available, try lowering seed number.");
-		exit(EXIT_FAILURE);	
-	}
-	uint64_t holder = nullomers[random];
-	nullomers[random] = nullomers[*count - 1];
-	nullomers[*count - 1] = holder;
-	*count--;
-
-        char *seq = malloc((ext_k+1) * sizeof(char));
-	decode_kmer(nullomers[random], ext_k, seq);
-	printf("New seed:\n%s\n", seq);
-	
-	free(seq);
 }
 
 bool gc_check(seed *s, uint64_t base, int max_gc_count, int min_gc_count){
