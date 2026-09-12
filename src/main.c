@@ -72,54 +72,6 @@ void decode_kmer(uint64_t idx, int k, char *seq) {
     seq[k] = '\0';
 }
 
-bool seed_check(seed *s, int k, int gc_max_count, int gc_min_count, int hp_max){
-	int gc = 0;
-	int hp_count = 1;
-	uint64_t idx = s->idx;
-	
-	uint64_t first_base = (idx >> ((k-1)*2)) & 3;
-	
-	if (first_base == 1 || first_base == 3){
-		gc++;
-	}
-
-	for (int j = 1; j < k; j++){
-		uint64_t base = (idx >> ((k-j-1)*2)) & 3;
-		
-		if (j == 1){
-			s->last_base = base;
-		}
-
-		if (base == 1 || base == 3){
-			gc++;
-			if (gc > gc_max_count){
-				return false;
-			}
-		}
-
-		if (first_base == base){
-			hp_count++;
-			if (hp_count > hp_max){
-				return false;
-			}
-		} else {
-			hp_count = 1;
-			first_base = base;
-		}
-		s->last_base = base;
-	}
-	
-	if (gc < gc_min_count){
-		return false;
-	}
-	
-	uint64_t idx_holder = s->idx;
-	s->gc = gc;
-	s->hp_count = hp_count;
-	s->last_base = idx_holder & 3;	
-	return true;
-}
-
 uint64_t extend_seed(seed *s, int diff_k,int k, float gc_max, float gc_min, int hp_max){
 	uint64_t curr_idx = s->idx;
 	int gc_max_count = (int)((gc_max/100)*k);
@@ -209,6 +161,7 @@ int main(int argc, char *argv[]){
 		}
 	}
 
+	printf("All seeds checked\n");
 	uint64_t final_seq[n];
 	int diff_k = ext_k - k;
 
@@ -230,8 +183,7 @@ int main(int argc, char *argv[]){
 		for (int j = i+1; j < n; j++){
 			uint64_t b = final_seq[j];
 			int hamming = hamming_check(a,b,ext_k);
-			hamming = ext_k - hamming;
-			if (hamming > 3){
+			if (hamming < 3){
 				select_seed(seeds, nullomers, i, &livecount, k);
 				uint64_t curr_idx = extend_seed(&seeds[i], diff_k, k, gc_max, gc_min, hp_max);
 				final_seq[i] = curr_idx;
