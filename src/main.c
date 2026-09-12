@@ -80,7 +80,6 @@ int main(int argc, char *argv[]){
 			i--;	
 		}
 	}
-	printf("All seeds checked\n");
 
 	// extend all approved seeds
 	// making sure they are still on par with the filters
@@ -92,7 +91,7 @@ int main(int argc, char *argv[]){
 		int min_gc_count = (gc_min/100)*ext_k;
 
 		curr_idx = extend_seed(&seeds[i], diff_k, k, gc_max, hp_max);	
-		uint8_t first_base = (seeds[i].idx >> (2 * (ext_k-1))) & 3;
+		uint8_t first_base = (curr_idx >> (2 * (ext_k-1))) & 3;
 		double final_tm = tm_finalize(&seeds[i].acc, first_base, seeds[i].last_base, NA_CONC, ext_k);
 		if (seeds[i].gc < min_gc_count || final_tm < tm_min || final_tm > tm_max){
 			select_seed(seeds, nullomers, i, &livecount, k);
@@ -101,11 +100,6 @@ int main(int argc, char *argv[]){
 			continue;
 		}	
 		final_seq[i] = curr_idx;
-                char *seq = malloc((ext_k+1) * sizeof(char));
-                decode_kmer(curr_idx, ext_k, seq);
-                printf("%s\n", seq);
-                
-                free(seq);
         }
 
 	// check orthogonality, randomizing new seeds
@@ -114,7 +108,7 @@ int main(int argc, char *argv[]){
 		uint64_t a = final_seq[i];
 		for (int j = i+1; j < n; j++){
 			uint64_t b = final_seq[j];
-			int hamming = hamming_check(a,b,ext_k);
+			int hamming = hamming_check(a,b);
 			if (hamming < 3){
 				select_seed(seeds, nullomers, i, &livecount, k);
 				seed_check(&seeds[i], k, max_gc_count, hp_max);

@@ -7,7 +7,7 @@ bool gc_check(seed *s, uint64_t base, int max_gc_count);
 
 bool hp_check(seed *s, uint64_t base, int hp_max);
 
-int hamming_check(uint64_t a, uint64_t b, int ext_k);
+int hamming_check(uint64_t a, uint64_t b);
 
 void tm_add_base(TmAccumulator *acc, uint8_t prev_base, uint8_t curr_base);
 
