@@ -10,10 +10,15 @@
 #include "seed_operations.h"
 #include "filters.h"
 
+#define ALPHABET_SIZE 4 // A, C, T AND G
+
 void select_seed(seed *seeds, uint64_t *nullomers, int i, int *count, int ext_k){
 	uint64_t random = rand() % *count;
 	if (nullomers[random]){
 		seeds[i].idx = nullomers[random];
+		seeds[i].gc = 0;
+		seeds[i].hp_count = 1;
+		seeds[i].last_base = (seeds[i].idx >>((ext_k-1)*2)) & 3;
 	} else {
 		printf("No more suitable seeds are available, try lowering seed number.");
 		exit(EXIT_FAILURE);	
@@ -21,12 +26,11 @@ void select_seed(seed *seeds, uint64_t *nullomers, int i, int *count, int ext_k)
 	uint64_t holder = nullomers[random];
 	nullomers[random] = nullomers[*count - 1];
 	nullomers[*count - 1] = holder;
-	*count--;
+	(*count)--;
+
 }
 
-bool seed_check(seed *s, int k, int gc_max_count, int gc_min_count, int hp_max){
-	int gc = 0;
-	int hp_count = 1;
+bool seed_check(seed *s, int k, int gc_max_count, int hp_max){
 	uint64_t idx = s->idx;
 	
 	uint64_t first_base = (idx >> ((k-1)*2)) & 3;
@@ -34,11 +38,10 @@ bool seed_check(seed *s, int k, int gc_max_count, int gc_min_count, int hp_max){
 	if (first_base == 1 || first_base == 3){
 		s->gc++;
 	}	
-	s->last_base = first_base;
 
 	for (int i = 1; i < k; i++){
 		uint64_t base = (idx >> ((k-i-1)*2)) & 3;
-		bool gc_checker = gc_check(s, base, gc_max_count, gc_min_count);
+		bool gc_checker = gc_check(s, base, gc_max_count);
 		bool hp_checker = hp_check(s, base, hp_max);
 		if (gc_checker == false || hp_checker == false){
 			return false;
@@ -47,4 +50,34 @@ bool seed_check(seed *s, int k, int gc_max_count, int gc_min_count, int hp_max){
 
 	return true;
 }
+
+uint64_t extend_seed(seed *s, int diff_k,int k, float gc_max, int hp_max){
+	uint64_t curr_idx = s->idx;
+	int gc_max_count = (int)((gc_max/100)*k);
+
+	for(int i = 0; i < diff_k; i++){
+
+		uint64_t base = rand() % ALPHABET_SIZE;
+		bool quality_checker = false;
+
+		while (quality_checker == false){
+			bool hp_checker = hp_check(s, base, hp_max);
+			bool gc_checker = gc_check(s, base, gc_max_count);
+
+			if(gc_checker == false || hp_checker == false){
+				base = (base + 1 + (rand() % (ALPHABET_SIZE - 1))) % ALPHABET_SIZE;
+			} else {
+				quality_checker = true;
+			}
+		}
+
+		int current_k = k + i + 1;
+		gc_max_count = (int)((gc_max/100)*current_k);
+		curr_idx = (curr_idx << 2) | base;
+		s->last_base = base;
+	}
+
+	return curr_idx;
+}
+
 

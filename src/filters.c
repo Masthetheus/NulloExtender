@@ -8,7 +8,7 @@
 
 #include <seed.h>
 
-bool gc_check(seed *s, uint64_t base, int max_gc_count, int min_gc_count){
+bool gc_check(seed *s, uint64_t base, int max_gc_count){
 	if (base == 1 || base == 3){
 		s->gc++;
 		if (s->gc >= max_gc_count){
@@ -19,9 +19,6 @@ bool gc_check(seed *s, uint64_t base, int max_gc_count, int min_gc_count){
 		}
 	}
 
-	if (s->gc < min_gc_count){
-		return false;
-	}
 	return true;
 }
 

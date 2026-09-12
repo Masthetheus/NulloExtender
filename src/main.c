@@ -72,36 +72,6 @@ void decode_kmer(uint64_t idx, int k, char *seq) {
     seq[k] = '\0';
 }
 
-uint64_t extend_seed(seed *s, int diff_k,int k, float gc_max, float gc_min, int hp_max){
-	uint64_t curr_idx = s->idx;
-	int gc_max_count = (int)((gc_max/100)*k);
-	int gc_min_count = (int)((gc_min/100)*k);
-
-	for(int i = 0; i < diff_k; i++){
-
-		uint64_t base = rand() % ALPHABET_SIZE;
-		bool quality_checker = false;
-
-		while (quality_checker == false){
-			bool hp_checker = hp_check(s, base, hp_max);
-			bool gc_checker = gc_check(s, base, gc_max_count, gc_min_count);
-
-			if(gc_checker == false || hp_checker == false){
-				base = (base + 1 + (rand() % (ALPHABET_SIZE - 1))) % ALPHABET_SIZE;
-			} else {
-				quality_checker = true;
-			}
-		}
-
-		int current_k = k + i + 1;
-		gc_max_count = (int)((gc_max/100)*current_k);
-		gc_min_count = (int)((gc_min/100)*current_k);
-		curr_idx = (curr_idx << 2) | base;
-	}
-
-	return curr_idx;
-}
-
 int main(int argc, char *argv[]){
         srand(time(NULL));
         if (argc != 7){
@@ -153,7 +123,7 @@ int main(int argc, char *argv[]){
 		int max_gc_count = (gc_max/100)*k;
 		int min_gc_count = (gc_min/100)*k;
 
-		bool seed_checker = seed_check(&seeds[i], k, max_gc_count, min_gc_count, hp_max);
+		bool seed_checker = seed_check(&seeds[i], k, max_gc_count, hp_max);
 
 		if (seed_checker == false){
 			select_seed(seeds, nullomers, i, &livecount, k);
@@ -165,11 +135,17 @@ int main(int argc, char *argv[]){
 	uint64_t final_seq[n];
 	int diff_k = ext_k - k;
 
+	int max_gc_count = (gc_max/100)*k;
         for (int i = 0; i < n; i++){
                 uint64_t curr_idx = seeds[i].idx;
-		int max_gc_count = (gc_max/100)*k;
-		int min_gc_count = (gc_min/100)*k;
-		curr_idx = extend_seed(&seeds[i], diff_k, k, gc_max, gc_min, hp_max);	
+		int min_gc_count = (gc_min/100)*ext_k;
+		curr_idx = extend_seed(&seeds[i], diff_k, k, gc_max, hp_max);	
+		if (seeds[i].gc < min_gc_count){
+			select_seed(seeds, nullomers, i, &livecount, k);
+			seed_check(&seeds[i], k, max_gc_count, hp_max);
+			i--;
+			continue;
+		}	
 		final_seq[i] = curr_idx;
                 char *seq = malloc((ext_k+1) * sizeof(char));
                 decode_kmer(curr_idx, ext_k, seq);
@@ -185,7 +161,8 @@ int main(int argc, char *argv[]){
 			int hamming = hamming_check(a,b,ext_k);
 			if (hamming < 3){
 				select_seed(seeds, nullomers, i, &livecount, k);
-				uint64_t curr_idx = extend_seed(&seeds[i], diff_k, k, gc_max, gc_min, hp_max);
+				seed_check(&seeds[i], k, max_gc_count, hp_max);
+				uint64_t curr_idx = extend_seed(&seeds[i], diff_k, k, gc_max, hp_max);
 				final_seq[i] = curr_idx;
 				i--;
 				break;
