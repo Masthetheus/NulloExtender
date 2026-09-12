@@ -23,4 +23,3 @@ void select_seed(seed *seeds, uint64_t *nullomers, int i, int *count, int ext_k)
 	*count--;
 }
 
-

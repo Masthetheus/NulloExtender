@@ -9,6 +9,7 @@
 #include "file_parser.h"
 #include "seed.h"
 #include "seed_operations.h"
+#include "filters.h"
 
 #define ALPHABET_SIZE 4 // A, C, T AND G
 #define INITIAL_CAPACITY 100000
@@ -69,42 +70,6 @@ void decode_kmer(uint64_t idx, int k, char *seq) {
         seq[i] = BITS_TO_BASE[base];
     }
     seq[k] = '\0';
-}
-
-bool gc_check(seed *s, uint64_t base, int max_gc_count, int min_gc_count){
-	if (base == 1 || base == 3){
-		s->gc++;
-		if (s->gc >= max_gc_count){
-			s->gc--;
-			return false;
-		} else {
-			return true;
-		}
-	}
-
-	if (s->gc < min_gc_count){
-		return false;
-	}
-	return true;
-}
-
-bool hp_check(seed *s, uint64_t base, int hp_max){
-	if (s->last_base == base){
-		s->hp_count++;
-		if (s->hp_count >= hp_max){
-			s->hp_count--;
-			return false;
-		}
-	} else {
-		s->hp_count = 1;
-	}
-	return true;
-}
-
-int hamming_check(uint64_t a, uint64_t b, int ext_k){
-	uint64_t diff = a ^ b;
-	uint64_t merged = (diff | (diff >> 1)) & 0x5555555555555555ULL;
-	return __builtin_popcountll(merged);
 }
 
 bool seed_check(seed *s, int k, int gc_max_count, int gc_min_count, int hp_max){
