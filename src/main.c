@@ -15,11 +15,12 @@
 
 #define ALPHABET_SIZE 4 // A, C, T AND G
 #define INITIAL_CAPACITY 100000
+#define NA_CONC 0.05
 
 int main(int argc, char *argv[]){
         srand(time(NULL));
-        if (argc != 7){
-                fprintf(stderr, "Usage: %s <nullomer_file> <gc_max> <gc_min> <homopolymer_max> <number_of_seeds> <target_length>\n", argv[0]);
+        if (argc != 9){
+                fprintf(stderr, "Usage: %s <nullomer_file> <gc_max> <gc_min> <homopolymer_max> <number_of_seeds> <target_length> <min_tm> <max_tm>\n", argv[0]);
                 return 1;
         }
 
@@ -48,6 +49,12 @@ int main(int argc, char *argv[]){
 	int hp_max = atoi(argv[4]);
 	int n = atoi(argv[5]);
         int ext_k = atoi(argv[6]);
+	double tm_min = strtof(argv[7], &endptr);
+	double tm_max = strtof(argv[8], &endptr);
+	if (tm_min >= tm_max){
+	    fprintf(stderr, "Error: Min Tm must be smaller than Max Tm!");
+	    return 1;
+	}
 		
 	// gather null set from file
 	int k = 0;
@@ -85,8 +92,9 @@ int main(int argc, char *argv[]){
 		int min_gc_count = (gc_min/100)*ext_k;
 
 		curr_idx = extend_seed(&seeds[i], diff_k, k, gc_max, hp_max);	
-
-		if (seeds[i].gc < min_gc_count){
+		uint8_t first_base = (seeds[i].idx >> (2 * (ext_k-1))) & 3;
+		double final_tm = tm_finalize(&seeds[i].acc, first_base, seeds[i].last_base, NA_CONC, ext_k);
+		if (seeds[i].gc < min_gc_count || final_tm < tm_min || final_tm > tm_max){
 			select_seed(seeds, nullomers, i, &livecount, k);
 			seed_check(&seeds[i], k, max_gc_count, hp_max);
 			i--;
