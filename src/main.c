@@ -10,11 +10,11 @@
 #include "seed.h"
 #include "seed_operations.h"
 #include "filters.h"
+#include "decode.h"
 
 #define ALPHABET_SIZE 4 // A, C, T AND G
 #define INITIAL_CAPACITY 100000
 
-static const char BITS_TO_BASE[4] = {'A', 'C', 'T', 'G'};
 
 typedef struct {
 	double delta_h;
@@ -62,14 +62,6 @@ double tm_finalize(TmAccumulator *acc, uint8_t first_base, uint8_t last_base,
     double Ct = 250e-9;     // 250nM, default
     double tm_kelvin = (h * 1000.0) / (s + R * log(Ct / 4.0));
     return tm_kelvin - 273.15;
-}
-
-void decode_kmer(uint64_t idx, int k, char *seq) {
-    for (int i = 0; i < k; i++) {
-        uint64_t base = (idx >> ((k-i-1)*2)) & 3;
-        seq[i] = BITS_TO_BASE[base];
-    }
-    seq[k] = '\0';
 }
 
 int main(int argc, char *argv[]){
