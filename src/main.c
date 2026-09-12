@@ -7,6 +7,7 @@
 #include <time.h>
 
 #include "file_parser.h"
+#include "seed.h"
 
 #define ALPHABET_SIZE 4 // A, C, T AND G
 #define INITIAL_CAPACITY 100000
@@ -60,14 +61,6 @@ double tm_finalize(TmAccumulator *acc, uint8_t first_base, uint8_t last_base,
     double tm_kelvin = (h * 1000.0) / (s + R * log(Ct / 4.0));
     return tm_kelvin - 273.15;
 }
-
-typedef struct seed{
-	uint64_t idx;
-	int gc;
-	int hp_count;
-	uint64_t last_base;
-	TmAccumulator *acc;
-} seed;
 
 void decode_kmer(uint64_t idx, int k, char *seq) {
     for (int i = 0; i < k; i++) {
@@ -205,7 +198,6 @@ uint64_t extend_seed(seed *s, int diff_k,int k, float gc_max, float gc_min, int 
 		int current_k = k + i + 1;
 		gc_max_count = (int)((gc_max/100)*current_k);
 		gc_min_count = (int)((gc_min/100)*current_k);
-		printf("%d %d", gc_max_count, gc_min_count);
 		curr_idx = (curr_idx << 2) | base;
 	}
 
