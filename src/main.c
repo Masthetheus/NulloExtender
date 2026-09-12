@@ -6,6 +6,8 @@
 #include <math.h>
 #include <time.h>
 
+#include "file_parser.h"
+
 #define ALPHABET_SIZE 4 // A, C, T AND G
 #define INITIAL_CAPACITY 100000
 
@@ -244,69 +246,9 @@ int main(int argc, char *argv[]){
 	int n = atoi(argv[5]);
         int ext_k = atoi(argv[6]);
 		
-        uint64_t *nullomers = NULL;
-        size_t count = 0;
-        size_t capacity = 0;
-
-
-        fseek(f, 6, SEEK_SET);
-
-        uint16_t parameters[4];
-        fread(parameters,2,2, f);
-
-        int k = parameters[0];
-        int half_k = parameters[1];
-
-	if (ext_k <= k){
-		fprintf(stderr,"Error: The target length must be bigger than the inicial k value!");
-		return 1;
-	}
-
-        uint8_t codes[2];
-
-        if (fread(codes, 1, 2, f) != 2){
-                fprintf(stderr, "Error in file parsing.");
-                fclose(f);
-                exit(EXIT_FAILURE);
-        }
-        unsigned char byte_size = codes[0];
-        unsigned char counter_size = codes[1];
-
-        uint64_t v1 = 0;
-        while (1) {
-                v1 = 0;
-                if (fread(&v1, byte_size, 1, f) != 1) break;
-
-                uint64_t counter = 0;
-                fread(&counter, counter_size, 1, f);
-                uint64_t null_count = counter;
-
-                uint8_t *null_collection = malloc(null_count * byte_size);
-                if (fread(null_collection, byte_size, null_count, f) != null_count){
-                        fprintf(stderr, "Error in file composition.\n");
-                        fclose(f);
-                        exit(EXIT_FAILURE);
-                }
-                for (size_t i = 0; i < null_count; i++) {
-                        uint64_t v2 = 0;
-                        memcpy(&v2, null_collection + i * byte_size, byte_size);
-                        uint64_t idx = (v1 << ((uint64_t) (k - half_k) * 2)) | v2;
-                        if (count == capacity){
-                                size_t new_capacity = (capacity==0) ? INITIAL_CAPACITY : capacity * 2;
-                                uint64_t *tmp = realloc(nullomers, new_capacity * sizeof(uint64_t));
-                                if (!tmp) {
-                                        perror("Realloc failed");
-                                        free(nullomers);
-                                        fclose(f);
-                                        return 1;
-                                }
-                                nullomers = tmp;
-                                capacity = new_capacity;
-                        }
-                        nullomers[count++] = idx;
-                }
-                free(null_collection);
-        }
+	int k = 0;
+	size_t count = 0;
+	uint64_t *nullomers = parse_nullomer_file(f, &k, &count);
 
         seed seeds[n];
 
