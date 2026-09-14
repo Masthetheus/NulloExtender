@@ -5,12 +5,16 @@
 #include <stdbool.h>
 #include <math.h>
 
+#include "seed_operations.h"
+
 static const char BITS_TO_BASE[4] = {'A', 'C', 'T', 'G'};
 
-void decode_kmer(uint64_t idx, int k, char *seq) {
-    for (int i = 0; i < k; i++) {
-        uint64_t base = (idx >> ((k-i-1)*2)) & 3;
-        seq[i] = BITS_TO_BASE[base];
-    }
-    seq[k] = '\0';
+void decode_kmer(seed *s, int k, char *seq) {
+        fprintf(stderr,"%d\n",s->length);
+        for (int i = 0; i < s->length; i++) {
+                fprintf(stderr,"BITS TO BASE %d\n",BITS_TO_BASE[seed_get_base(s, i)]);
+                seq[i] = BITS_TO_BASE[seed_get_base(s, i)];
+                fprintf(stderr,"%s\n", seq[i]);
+        }
+        seq[s->length] = '\0';
 }

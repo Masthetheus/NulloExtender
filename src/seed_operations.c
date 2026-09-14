@@ -13,13 +13,42 @@
 
 #define ALPHABET_SIZE 4 // A, C, T AND G
 
-void select_seed(seed *seeds, uint64_t *nullomers, int i, int *count, int ext_k){
+void initialize_seeds(seed *seeds, int ext_k, int n) {
+        int n_blocks = (ext_k + 31)/32;
+        for (int i = 0; i < n; i++){
+                seeds[i].blocks = calloc(n_blocks, sizeof(uint64_t));
+                seeds[i].length = 0;
+                seeds[i].n_blocks = n_blocks;
+        }
+}
+
+void seed_push_base(seed *s, uint64_t base){
+        int block_idx = s->length/32;
+        int offset = (s->length % 32) * 2;
+        s->blocks[block_idx] |= (base << offset);
+        s->length++;
+}
+
+uint64_t seed_get_base(const seed *s, int pos){
+        int block_idx = pos/32;
+        int offset = (pos % 32) * 2;
+        return (s->blocks[block_idx] >> offset) & 3;
+}
+
+void seed_destroy(seed *seeds, int n){
+        for (int i = 0; i < n; i++){
+                free(seeds[i].blocks);
+        }
+}
+
+void select_seed(seed *seeds, uint64_t *nullomers, int i, int *count, int k){
 	uint64_t random = rand() % *count;
 	if (nullomers[random]){
-		seeds[i].idx = nullomers[random];
+		seeds[i].blocks[0] = nullomers[random];
+                seeds[i].length = k; 
 		seeds[i].gc = 0;
 		seeds[i].hp_count = 1;
-		seeds[i].last_base = (seeds[i].idx >>((ext_k-1)*2)) & 3;
+		seeds[i].last_base = (seeds[i].blocks[0] >>((k-1)*2)) & 3;
 		seeds[i].acc = (TmAccumulator){0};
 	} else {
 		printf("No more suitable seeds are available, try lowering seed number.");
@@ -33,7 +62,7 @@ void select_seed(seed *seeds, uint64_t *nullomers, int i, int *count, int ext_k)
 }
 
 bool seed_check(seed *s, int k, int gc_max_count, int hp_max){
-	uint64_t idx = s->idx;
+	uint64_t idx = s->blocks[0];
 	
 	uint64_t first_base = (idx >> ((k-1)*2)) & 3;
 	
@@ -55,8 +84,8 @@ bool seed_check(seed *s, int k, int gc_max_count, int hp_max){
 	return true;
 }
 
-uint64_t extend_seed(seed *s, int diff_k,int k, float gc_max, int hp_max){
-	uint64_t curr_idx = s->idx;
+void extend_seed(seed *s, int diff_k,int k, float gc_max, int hp_max){
+	uint64_t curr_idx = s->blocks[0];
 	int gc_max_count = (int)((gc_max/100)*k);
 
 	for(int i = 0; i < diff_k; i++){
@@ -79,10 +108,8 @@ uint64_t extend_seed(seed *s, int diff_k,int k, float gc_max, int hp_max){
 		tm_add_base(&s->acc, prev_base, base);
 		int current_k = k + i + 1;
 		gc_max_count = (int)((gc_max/100)*current_k);
-		curr_idx = (curr_idx << 2) | base;
+                seed_push_base(s, base);
 	}
-
-	return curr_idx;
 }
 
 
