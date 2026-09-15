@@ -2,9 +2,9 @@
 
 NulloExtender: Constrained Seed Extension from Nullomers and Minimal Absent Words
 
-**Version 1.1.0**  | **Experimental Release**
+**Version 1.1.1**  | **Experimental Release**
 
-**The current version is extremely experimental, and its results shouldn't be taken as face value for final usage.**
+**The current version is extremely experimental, although the sequences are confirmed to be absent from the genome, the filters are still in adjustment.**
 
 ## 1. Description
 
@@ -33,6 +33,11 @@ The resulting binary is placed at `bin/nullo_extender`. To rebuild from scratch:
 make clean && make
 ```
 
+For memory issues and general debugging, one can run:
+```
+make DEBUG=1
+```
+
 ## 3. Usage
 
 ### 3.1 Command-line syntax
@@ -49,17 +54,17 @@ make clean && make
 | `gc_min` | float | Minimum allowed GC percentage (0–100). Must be strictly lower than `gc_max`. |
 | `homopolymer_max` | int | Maximum allowable length of consecutive identical bases (e.g., 3 forbids runs of four or more identical bases). |
 | `number_of_seeds` | int | Number of distinct seed sequences to select and extend. Must not exceed the total number of nullomers present in the index. |
-| `target_length` | int | Length of the final extended sequence. **Currently limited to 32 bases** due to the internal `uint64_t` bit-packed representation (see Section 7). |
+| `target_length` | int | Length of the final extended sequence.|
 | `tm_min` | float | Minimum acceptable melting temperature, in °C. |
 | `tm_max` | float | Maximum acceptable melting temperature, in °C. Must be strictly greater than `tm_min`. |
 
-Sodium concentration used in the salt-correction term of the Tm calculation is currently fixed internally (`NA_CONC = 0.05`, i.e. 50mM) and is not user-configurable in this release.
+Sodium concentration used in the salt-correction term of the Tm calculation is currently fixed internally (`NA_CONC = 0.05`, i.e. 50mM) and is not user-configurable in this release. If needed, the fixed value can be manually altered and further recompiled.
 
 ### 3.3 Example
 ```
-./bin/nullo_extender data/subtilis_result 55 30 3 20 32 55 65
+./bin/nullo_extender example/bsubtilis_k11_example 55 30 3 20 32 55 65
 ```
-This invocation reads the `subtilis_result` index, selects 20 seeds with GC content between 30% and 55%, rejects any candidate containing homopolymer runs longer than 3 bases, extends each accepted seed to a final length of 32 bases, and requires a melting temperature between 55°C and 65°C. Extended sequences are written to standard output.
+This invocation reads the `bsubtilis_k11_example` index, selects 20 seeds with GC content between 30% and 55%, rejects any candidate containing homopolymer runs longer than 3 bases, extends each accepted seed to a final length of 32 bases, and requires a melting temperature between 55°C and 65°C. Extended sequences are written to standard output.
 
 ## 4. Algorithmic Overview
 
@@ -103,14 +108,10 @@ The program writes extended sequences to standard output in plain text format, o
 ```
 ./bin/nullo_extender data/hg38.nullomer 55 30 3 100 32 55 65 > selected_sequences.txt
 ```
-**Known issue:** diagnostic and status messages (e.g. "All seeds checked", seed-replacement notices) are currently printed to standard output rather than standard error, and are therefore mixed with the primary sequence output. Redirecting stdout to a file will currently capture these messages as well. This will be corrected in a future release.
-
 ## 7. Limitations and Future Work
 
-- **Sequence length ceiling:** the internal representation packs each sequence into a single `uint64_t` (2 bits/base), limiting `target_length` to 32 bases. Support for longer sequences (up to ~250 bases, as required by some barcoding applications) requires migrating to a multi-block representation and is planned for a future release.
 - **Fixed salt concentration:** sodium concentration for the Tm salt correction is hardcoded and not currently exposed as a parameter.
 - **Output formats:** additional output modes (FASTA, CSV, BED) are under consideration to facilitate integration with downstream tools.
-- **Diagnostic/output stream separation:** see Section 6.
 
 ## 8. Citation
 
