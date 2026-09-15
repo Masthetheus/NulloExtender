@@ -104,32 +104,29 @@ int main(int argc, char *argv[]){
 
 	// check orthogonality, randomizing new seeds
 	// when it fails the minimum hamming distance
-	//for (int i = 0; i < n; i++){
-	//	uint64_t a = final_seq[i];
-	//	for (int j = i+1; j < n; j++){
-	//		uint64_t b = final_seq[j];
-	//		int hamming = hamming_check(a,b);
-	//		if (hamming < 3){
-	//			select_seed(seeds, nullomers, i, &livecount, k);
-	//			seed_check(&seeds[i], k, max_gc_count, hp_max);
-	//			extend_seed(&seeds[i], diff_k, k, gc_max, hp_max);
-	//			final_seq[i].blocks = seeds[i].blocks;
-	//			i--;
-	//			break;
-	//		}
-	//	}
-	//}
+        for (int i = 0; i < n; i++){
+                for (int j = i+1; j < n; j++){
+                        int hamming = hamming_check(&seeds[i], &seeds[j]);
+                        if (hamming < 3){
+                                select_seed(seeds, nullomers, i, &livecount, k);
+                                seed_check(&seeds[i], k, max_gc_count, hp_max);
+                                extend_seed(&seeds[i], diff_k, k, gc_max, hp_max);
+                                i--;
+                                break;
+                        }
+                }
+        }
 
 	// output final primers
 	for (int i = 0; i < n; i++){
                 char *seq = malloc((ext_k+1) * sizeof(char));
                 decode_kmer(&seeds[i], ext_k, seq);
                 printf("%s\n", seq);
-                
                 free(seq);
 	}
                
 
+        seed_destroy(seeds, n);
         fclose(f);
         free(nullomers);
 

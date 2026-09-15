@@ -40,10 +40,21 @@ bool hp_check(seed *s, uint8_t base, int hp_max){
 	return true;
 }
 
-int hamming_check(uint64_t a, uint64_t b){
-	uint64_t diff = a ^ b;
-	uint64_t merged = (diff | (diff >> 1)) & 0x5555555555555555ULL;
-	return __builtin_popcountll(merged);
+int hamming_check(const seed *a, const seed *b){
+    int dist = 0;
+    for (int i = 0; i < a->n_blocks; i++){
+        uint64_t diff = a->blocks[i] ^ b->blocks[i];
+
+        if (i == a->n_blocks - 1){
+            int used_bits = (a->length % 32 == 0) ? 64 : (a->length % 32) * 2;
+            uint64_t mask = (used_bits == 64) ? ~0ULL : ((1ULL << used_bits) - 1);
+            diff &= mask;
+        }
+
+        uint64_t merged = (diff | (diff >> 1)) & 0x5555555555555555ULL;
+        dist += __builtin_popcountll(merged);
+    }
+    return dist;
 }
 
 void tm_add_base(TmAccumulator *acc, uint8_t prev_base, uint8_t curr_base) {

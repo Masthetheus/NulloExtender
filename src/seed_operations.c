@@ -69,6 +69,14 @@ void select_seed(seed *seeds, uint64_t *nullomers, int i, int *count, int k){
 
 }
 
+void seed_debug_print(const seed *s, int k) {
+    fprintf(stderr, "length=%d gc=%d hp_count=%d last_base=%d | ", s->length, s->gc, s->hp_count, (int)s->last_base);
+    for (int i = 0; i < s->length; i++) {
+        fprintf(stderr, "%d", (int)seed_get_base(s, i));
+    }
+    fprintf(stderr, "\n");
+}
+
 bool seed_check(seed *s, int k, int gc_max_count, int hp_max){
         uint8_t first_base = seed_get_base(s,0);
 	
@@ -86,6 +94,8 @@ bool seed_check(seed *s, int k, int gc_max_count, int hp_max){
 		}
 		tm_add_base(&s->acc, prev_base, base);
 	}
+
+        //seed_debug_print(s, k);
 
 	return true;
 }
