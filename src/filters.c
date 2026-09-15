@@ -9,7 +9,7 @@
 #include "seed.h"
 #include "nn_table.h"
 
-bool gc_check(seed *s, uint64_t base, int max_gc_count){
+bool gc_check(seed *s, uint8_t base, int max_gc_count){
 	if (base == 1 || base == 3){
 		s->gc++;
 		if (s->gc >= max_gc_count){
@@ -23,16 +23,19 @@ bool gc_check(seed *s, uint64_t base, int max_gc_count){
 	return true;
 }
 
-bool hp_check(seed *s, uint64_t base, int hp_max){
+bool hp_check(seed *s, uint8_t base, int hp_max){
+	int candidate_hp_count;
+
 	if (s->last_base == base){
-		s->hp_count++;
-		if (s->hp_count >= hp_max){
-			s->hp_count--;
+		candidate_hp_count = s->hp_count + 1;
+		if (candidate_hp_count >= hp_max){
 			return false;
 		}
 	} else {
-		s->hp_count = 1;
+		candidate_hp_count = 1;
 	}
+
+	s->hp_count = candidate_hp_count;
 	s->last_base = base;
 	return true;
 }

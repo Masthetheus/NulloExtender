@@ -61,6 +61,7 @@ int main(int argc, char *argv[]){
 	size_t count = 0;
 	uint64_t *nullomers = parse_nullomer_file(f, &k, &count);
 
+
 	// obtain first draft of seeds
         seed seeds[n];
         initialize_seeds(seeds, ext_k, n);
@@ -91,12 +92,7 @@ int main(int argc, char *argv[]){
 		int min_gc_count = (gc_min/100)*ext_k;
 
 		extend_seed(&seeds[i], diff_k, k, gc_max, hp_max);	
-                uint8_t first_base;
-                if (seeds[i].length > 32){
-                        first_base = (seeds[i].blocks[0] >> (2 * (32-1))) & 3;
-                } else{
-                        first_base = (seeds[i].blocks[0] >> (2 * (seeds[i].length-1))) & 3;
-                }
+                uint8_t first_base = seed_get_base(&seeds[i], 0);
 		double final_tm = tm_finalize(&seeds[i].acc, first_base, seeds[i].last_base, NA_CONC, ext_k);
 		if (seeds[i].gc < min_gc_count || final_tm < tm_min || final_tm > tm_max){
 			select_seed(seeds, nullomers, i, &livecount, k);
@@ -126,13 +122,11 @@ int main(int argc, char *argv[]){
 
 	// output final primers
 	for (int i = 0; i < n; i++){
-                fprintf(stderr,"oi %ld\n",seeds[i].blocks[0]);
                 char *seq = malloc((ext_k+1) * sizeof(char));
                 decode_kmer(&seeds[i], ext_k, seq);
                 printf("%s\n", seq);
                 
                 free(seq);
-
 	}
                
 

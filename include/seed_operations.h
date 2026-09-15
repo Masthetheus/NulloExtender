@@ -7,7 +7,7 @@ void initialize_seeds(seed *seeds, int ext_k, int n);
 
 void seed_push_base(seed *s, uint64_t base);
 
-uint64_t seed_get_base(const seed *s, int pos);
+uint8_t seed_get_base(const seed *s, int pos);
 
 void seed_destroy(seed *seeds, int n);
 

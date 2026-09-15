@@ -9,7 +9,7 @@ typedef struct seed{
         int n_blocks;
 	int gc;
 	int hp_count;
-	uint64_t last_base;
+	uint8_t last_base;
 	TmAccumulator acc;
 } seed;
 
